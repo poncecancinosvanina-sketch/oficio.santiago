@@ -26,6 +26,12 @@ export default function RootLayout({
           <div className="max-w-7xl mx-auto px-4">
             <p>&copy; {new Date().getFullYear()} Oficios Santiago. Todos los derechos reservados.</p>
             <p className="mt-1 text-xs text-slate-400">Santiago del Estero, Argentina.</p>
+            <p className="mt-2 text-xs text-slate-400">
+              Desarrollado por{' '}
+              <span className="font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                VaninaG
+              </span>
+            </p>
           </div>
         </footer>
       </body>
