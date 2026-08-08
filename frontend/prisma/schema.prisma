@@ -1,0 +1,91 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  phone           String
+  address         String?
+  latitude        Float
+  longitude       Float
+  serviceRequests ServiceRequest[]
+  createdAt       DateTime         @default(now())
+
+  @@map("users")
+}
+
+model Provider {
+  id               String           @id @default(uuid())
+  cuitArca         String           @unique @map("cuit_arca")
+  businessName     String           @map("business_name")
+  category         String
+  subcategories    String[]
+  latitude         Float
+  longitude        Float
+  coverageRadiusKm Float            @default(5.0) @map("coverage_radius_km")
+  walletBalance    Float            @default(0.0) @map("wallet_balance")
+  isActive         Boolean          @default(false) @map("is_active")
+  isVerified       Boolean          @default(false) @map("is_verified")
+  ratingAvg        Float            @default(0.0) @map("rating_avg")
+  phone            String
+  serviceRequests  ServiceRequest[]
+  transactions     Transaction[]
+  createdAt        DateTime         @default(now())
+
+  @@map("providers")
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+}
+
+model ServiceRequest {
+  id             String        @id @default(uuid())
+  clientId       String        @map("client_id")
+  client         User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  providerId     String?       @map("provider_id")
+  provider       Provider?     @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  category       String
+  description    String
+  latitude       Float
+  longitude      Float
+  status         RequestStatus @default(PENDING)
+  leadFeeCharged Float         @default(10000.0) @map("lead_fee_charged")
+  createdAt      DateTime      @default(now())
+
+  @@map("service_requests")
+}
+
+enum TransactionType {
+  CREDIT_RECHARGE
+  LEAD_DEDUCTION
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FAILED
+}
+
+model Transaction {
+  id           String            @id @default(uuid())
+  providerId   String            @map("provider_id")
+  provider     Provider          @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  amount       Float
+  type         TransactionType
+  mpPaymentId  String?           @map("mp_payment_id")
+  status       TransactionStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+
+  @@map("transactions")
+}
