@@ -869,6 +869,9 @@ video {
 .w-72 {
   width: 18rem;
 }
+.w-auto {
+  width: auto;
+}
 .min-w-0 {
   min-width: 0px;
 }
@@ -1594,6 +1597,9 @@ video {
 .leading-tight {
   line-height: 1.25;
 }
+.leading-none {
+  line-height: 1;
+}
 .tracking-tight {
   letter-spacing: -0.025em;
 }
@@ -1738,6 +1744,10 @@ video {
 }
 .text-white\/80 {
   color: rgb(255 255 255 / 0.8);
+}
+.text-violet-600 {
+  --tw-text-opacity: 1;
+  color: rgb(124 58 237 / var(--tw-text-opacity, 1));
 }
 .placeholder-slate-400::-moz-placeholder {
   --tw-placeholder-opacity: 1;
