@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { getSupabaseErrorMessage } from '@/lib/supabase/errors';
 import { Search, MapPin, Loader2, CheckCircle, Phone } from 'lucide-react';
 import ProviderCard from '@/components/ProviderCard';
 import { Provider } from '@/types/database';
@@ -14,6 +15,7 @@ export default function SolicitarServicio() {
   const [loading, setLoading] = useState(false);
   const [searchingProviders, setSearchingProviders] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [providersError, setProvidersError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   // Form states
@@ -63,10 +65,11 @@ export default function SolicitarServicio() {
 
   const fetchNearbyProviders = async () => {
     setSearchingProviders(true);
+    setProvidersError(null);
+
     try {
       const supabase = createClient();
-      
-      // Llamamos a la función RPC de PostGIS que agregamos
+
       const { data, error: rpcError } = await supabase.rpc('get_nearby_providers', {
         client_lat: lat,
         client_lng: lng,
@@ -77,6 +80,13 @@ export default function SolicitarServicio() {
       setNearbyProviders(data || []);
     } catch (err) {
       console.error('Error al buscar prestadores:', err);
+      setNearbyProviders([]);
+      setProvidersError(
+        getSupabaseErrorMessage(
+          err,
+          'No pudimos cargar los prestadores disponibles. Intentá de nuevo en unos segundos.'
+        )
+      );
     } finally {
       setSearchingProviders(false);
     }
@@ -95,11 +105,10 @@ export default function SolicitarServicio() {
 
     try {
       const supabase = createClient();
-      const clientId = crypto.randomUUID(); // Generamos un id aleatorio para el cliente
+      const clientId = crypto.randomUUID();
 
-      // 1. Crear el perfil de usuario (cliente)
       const clientLocationPoint = `POINT(${lng} ${lat})`;
-      
+
       const { error: userError } = await supabase.from('users').insert([
         {
           id: clientId,
@@ -112,7 +121,6 @@ export default function SolicitarServicio() {
 
       if (userError) throw userError;
 
-      // 2. Crear la solicitud de servicio (lead)
       const { error: requestError } = await supabase.from('service_requests').insert([
         {
           client_id: clientId,
@@ -120,16 +128,21 @@ export default function SolicitarServicio() {
           description,
           location: clientLocationPoint,
           status: 'pending',
-          lead_fee_charged: 10000.0, // Costo de intermediación fija
+          lead_fee_charged: 10000.0,
         },
       ]);
 
       if (requestError) throw requestError;
 
       setSuccess(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'Ocurrió un error al enviar la solicitud.');
+      setError(
+        getSupabaseErrorMessage(
+          err,
+          'Ocurrió un error al enviar la solicitud. Intentá de nuevo.'
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -324,6 +337,12 @@ export default function SolicitarServicio() {
               <span>Prestadores en tu zona ({nearbyProviders.length})</span>
               {searchingProviders && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
             </h3>
+
+            {providersError && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-100 text-amber-800 rounded-xl text-sm font-semibold">
+                {providersError}
+              </div>
+            )}
 
             {nearbyProviders.length === 0 ? (
               <div className="text-center py-12 text-slate-400 text-sm">

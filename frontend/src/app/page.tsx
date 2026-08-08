@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   MapPin, Search, Clock, Zap, Star, ChevronRight,
-  Droplets, Lightbulb, Lock, Flame, PaintBucket, Wind,
-  SprayCan, HardHat, Shield, ArrowRight, Bell, User
+  Flame, PaintBucket, Wind,
+  SprayCan, HardHat, ArrowRight, Bell, User
 } from 'lucide-react';
+import { LogoOficiosSantiago } from '@/components/Logo';
 
 // ─── Datos estáticos del MVP ───────────────────────────────────────────────────
 
@@ -95,12 +96,9 @@ export default function Home() {
       {/* ── TOP BAR (Mobile Header) ─────────────────────────────────────── */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-100 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow">
-              <Shield className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-extrabold text-slate-800 text-base tracking-tight">Oficios<span className="text-blue-600">Sgo</span></span>
-          </div>
+          <Link href="/">
+            <LogoOficiosSantiago className="h-8 w-auto" />
+          </Link>
           <div className="flex items-center space-x-2">
             <button className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition">
               <Bell className="w-4 h-4 text-slate-600" />

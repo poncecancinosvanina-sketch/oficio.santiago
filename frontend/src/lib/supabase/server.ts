@@ -5,10 +5,16 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 // Cliente para Server Components, Server Actions y Route Handlers (Aplica RLS)
 export function createClient() {
   const cookieStore = cookies();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Las variables de entorno de Supabase no están configuradas correctamente.');
+  }
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -31,13 +37,20 @@ export function createClient() {
 
 // Cliente privilegiado con Service Role Key (Bypassa RLS - Solo Servidor)
 export function createServiceClient() {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!supabaseUrl) {
+    throw new Error('La variable NEXT_PUBLIC_SUPABASE_URL no está configurada.');
+  }
+
+  if (!serviceRoleKey) {
     throw new Error('La variable SUPABASE_SERVICE_ROLE_KEY no está configurada.');
   }
 
   return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    supabaseUrl,
+    serviceRoleKey,
     {
       auth: {
         persistSession: false,
