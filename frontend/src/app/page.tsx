@@ -1,118 +1,319 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Wallet, ShieldCheck, MapPin, Star, Sparkles, PhoneCall } from 'lucide-react';
+import {
+  MapPin, Search, Clock, Zap, Star, ChevronRight,
+  Droplets, Lightbulb, Lock, Flame, PaintBucket, Wind,
+  SprayCan, HardHat, Shield, ArrowRight, Bell, User
+} from 'lucide-react';
+
+// ─── Datos estáticos del MVP ───────────────────────────────────────────────────
+
+const CATEGORIES = [
+  { label: 'Plomería',      icon: Droplets,    color: 'bg-blue-50 text-blue-600',    badge: 'Popular',  badgeColor: 'bg-blue-600' },
+  { label: 'Electricidad',  icon: Lightbulb,   color: 'bg-amber-50 text-amber-500',  badge: 'Rápido',   badgeColor: 'bg-amber-500' },
+  { label: 'Cerrajería',    icon: Lock,        color: 'bg-slate-50 text-slate-600',  badge: 'Urgente',  badgeColor: 'bg-rose-500' },
+  { label: 'Gas',           icon: Flame,       color: 'bg-orange-50 text-orange-500', badge: 'Popular', badgeColor: 'bg-orange-500' },
+  { label: 'Pintura',       icon: PaintBucket, color: 'bg-pink-50 text-pink-500',    badge: null,       badgeColor: '' },
+  { label: 'Climatización', icon: Wind,        color: 'bg-cyan-50 text-cyan-600',    badge: 'Rápido',   badgeColor: 'bg-cyan-600' },
+  { label: 'Limpieza',      icon: SprayCan,    color: 'bg-emerald-50 text-emerald-600', badge: null,    badgeColor: '' },
+  { label: 'Albañilería',   icon: HardHat,     color: 'bg-stone-50 text-stone-600',  badge: null,       badgeColor: '' },
+];
+
+const FEATURED_PROVIDERS = [
+  {
+    id: '1',
+    name: 'Mario Gómez',
+    specialty: 'Plomero · Destapaciones',
+    rating: 4.9,
+    reviews: 132,
+    distance: '1.2 km',
+    eta: '~15 min',
+    online: true,
+    avatar: 'MG',
+    avatarColor: 'from-blue-500 to-indigo-600',
+  },
+  {
+    id: '2',
+    name: 'Carlos Rueda',
+    specialty: 'Electricista · Instalaciones',
+    rating: 4.8,
+    reviews: 98,
+    distance: '2.4 km',
+    eta: '~22 min',
+    online: true,
+    avatar: 'CR',
+    avatarColor: 'from-amber-400 to-orange-500',
+  },
+  {
+    id: '3',
+    name: 'Luis Paz',
+    specialty: 'Gasista Matriculado',
+    rating: 5.0,
+    reviews: 74,
+    distance: '3.1 km',
+    eta: '~30 min',
+    online: false,
+    avatar: 'LP',
+    avatarColor: 'from-orange-400 to-rose-500',
+  },
+];
+
+// ─── Componentes internos ──────────────────────────────────────────────────────
+
+function ProviderAvatar({ initials, gradient, online }: { initials: string; gradient: string; online: boolean }) {
+  return (
+    <div className="relative flex-shrink-0">
+      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-extrabold text-lg shadow-md`}>
+        {initials}
+      </div>
+      <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${online ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+    </div>
+  );
+}
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center space-x-1">
+      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+      <span className="text-xs font-bold text-slate-700">{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
+// ─── Página Principal ──────────────────────────────────────────────────────────
 
 export default function Home() {
+  const [address, setAddress] = useState('');
+  const [mode, setMode] = useState<'urgent' | 'schedule'>('urgent');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   return (
-    <div className="relative isolate overflow-hidden bg-slate-50">
-      {/* Elementos Decorativos de Fondo */}
-      <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
-        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#3b82f6] to-[#818cf8] opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72rem]"></div>
-      </div>
+    <div className="min-h-screen bg-slate-50 pb-28 md:pb-8">
 
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-6 pt-16 pb-24 sm:pt-24 sm:pb-32 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center space-x-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-100 mb-6">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Marketplace Exclusivo para Santiago del Estero</span>
+      {/* ── TOP BAR (Mobile Header) ─────────────────────────────────────── */}
+      <div className="sticky top-0 z-40 bg-white border-b border-slate-100 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-extrabold text-slate-800 text-base tracking-tight">Oficios<span className="text-blue-600">Sgo</span></span>
           </div>
-          
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 bg-clip-text">
-            Solucioná tus problemas del hogar en minutos
-          </h1>
-          
-          <p className="mt-6 text-lg leading-8 text-slate-600">
-            Conectá de forma directa con plomeros, electricistas, pintores, gasistas y carpinteros verificados fiscalmente por ARCA en tu zona.
-          </p>
-
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/solicitar"
-              className="w-full sm:w-auto inline-flex justify-center items-center space-x-2 rounded-2xl bg-blue-600 px-6 py-4 text-base font-bold text-white hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all active:scale-95"
-            >
-              <Search className="w-5 h-5" />
-              <span>Solicitar un Servicio</span>
-            </Link>
-            <Link
-              href="/registro-prestador"
-              className="w-full sm:w-auto inline-flex justify-center items-center space-x-2 rounded-2xl bg-white px-6 py-4 text-base font-bold text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-sm transition-all active:scale-95"
-            >
-              <span>Quiero ofrecer mis servicios</span>
+          <div className="flex items-center space-x-2">
+            <button className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition">
+              <Bell className="w-4 h-4 text-slate-600" />
+            </button>
+            <Link href="/registro-prestador" className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition">
+              <User className="w-4 h-4 text-slate-600" />
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Características (Beneficios) */}
-      <div className="bg-white py-24 sm:py-32 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-bold leading-7 text-blue-600 uppercase tracking-wide">¿Cómo funciona?</h2>
-            <p className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-              Un modelo ágil, transparente y directo
-            </p>
-          </div>
+      <div className="max-w-2xl mx-auto px-4 space-y-6 pt-5">
 
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-              
-              {/* Beneficio 1 */}
-              <div className="flex flex-col items-start bg-slate-50/50 p-8 rounded-3xl border border-slate-100 hover:shadow-sm transition-shadow">
-                <div className="rounded-2xl bg-blue-600 p-3 text-white">
-                  <MapPin className="h-6 w-6" />
-                </div>
-                <dt className="mt-4 font-bold text-xl text-slate-900">Geolocalización PostGIS</dt>
-                <dd className="mt-2 leading-relaxed text-slate-600 text-sm">
-                  Buscamos prestadores activos dentro de su rango de cobertura configurado (ej: 3km, 5km o 10km) para garantizar respuestas inmediatas y traslados rápidos.
-                </dd>
-              </div>
+        {/* ── HERO SEARCH (Estilo Uber) ──────────────────────────────────── */}
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-5 shadow-xl relative overflow-hidden">
+          {/* Decoración de fondo */}
+          <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-indigo-400/20 rounded-full blur-xl" />
 
-              {/* Beneficio 2 */}
-              <div className="flex flex-col items-start bg-slate-50/50 p-8 rounded-3xl border border-slate-100 hover:shadow-sm transition-shadow">
-                <div className="rounded-2xl bg-emerald-600 p-3 text-white">
-                  <ShieldCheck className="h-6 w-6" />
-                </div>
-                <dt className="mt-4 font-bold text-xl text-slate-900">Validación Fiscal ARCA</dt>
-                <dd className="mt-2 leading-relaxed text-slate-600 text-sm">
-                  Todos los prestadores son validados en ARCA (CUIT activo y Monotributo / Responsable Inscripto) para asegurar formalidad y total confianza del cliente.
-                </dd>
-              </div>
+          <div className="relative">
+            <p className="text-blue-100 text-xs font-semibold uppercase tracking-widest mb-1">¿Qué necesitás hoy?</p>
+            <h1 className="text-white text-2xl font-extrabold leading-tight mb-4">
+              Encontrá un oficio<br />en tu zona ahora
+            </h1>
 
-              {/* Beneficio 3 */}
-              <div className="flex flex-col items-start bg-slate-50/50 p-8 rounded-3xl border border-slate-100 hover:shadow-sm transition-shadow">
-                <div className="rounded-2xl bg-indigo-600 p-3 text-white">
-                  <Wallet className="h-6 w-6" />
-                </div>
-                <dt className="mt-4 font-bold text-xl text-slate-900">Sin Comisiones de Trabajo</dt>
-                <dd className="mt-2 leading-relaxed text-slate-600 text-sm">
-                  El prestador adquiere el lead de contacto directo mediante su saldo prepago cargado en Mercado Pago. El trato y pago del servicio es 100% libre entre las partes.
-                </dd>
-              </div>
+            {/* Selector de Modalidad */}
+            <div className="flex bg-white/10 rounded-xl p-1 mb-3 backdrop-blur-sm">
+              <button
+                onClick={() => setMode('urgent')}
+                className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-bold transition-all ${
+                  mode === 'urgent' ? 'bg-white text-blue-700 shadow-sm' : 'text-white/80 hover:text-white'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Urgente · Llega ya</span>
+              </button>
+              <button
+                onClick={() => setMode('schedule')}
+                className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-bold transition-all ${
+                  mode === 'schedule' ? 'bg-white text-indigo-700 shadow-sm' : 'text-white/80 hover:text-white'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Programar turno</span>
+              </button>
+            </div>
 
-            </dl>
+            {/* Input de Dirección */}
+            <div className="flex items-center bg-white rounded-2xl shadow-lg px-4 py-3 space-x-3">
+              <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Tu dirección en Santiago del Estero..."
+                className="flex-1 text-sm font-medium text-slate-700 placeholder-slate-400 outline-none bg-transparent"
+              />
+              <Link
+                href={address ? `/solicitar?address=${encodeURIComponent(address)}&mode=${mode}` : '/solicitar'}
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-2 transition shadow-sm flex-shrink-0 active:scale-95"
+              >
+                <Search className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Call To Action Secundario */}
-      <div className="max-w-5xl mx-auto px-6 py-20 text-center">
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-8 -mt-8"></div>
-          <h3 className="text-2xl sm:text-4xl font-extrabold">¿Sos trabajador independiente?</h3>
-          <p className="mt-4 text-blue-100 max-w-xl mx-auto text-base">
-            Cargá saldo con Mercado Pago, configurá tu radio y recibí pedidos directos en Santiago del Estero. Multiplicá tu clientela hoy mismo.
-          </p>
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/registro-prestador"
-              className="inline-flex items-center space-x-2 bg-white text-blue-700 px-6 py-3.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow"
-            >
-              <PhoneCall className="w-4 h-4" />
-              <span>Registrarme como Prestador</span>
+        {/* ── GRILLA DE CATEGORÍAS (Estilo PedidosYa) ──────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-extrabold text-slate-800">¿Qué tipo de trabajo?</h2>
+            <Link href="/solicitar" className="text-xs font-bold text-blue-600 flex items-center space-x-0.5 hover:underline">
+              <span>Ver todos</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
+
+          <div className="grid grid-cols-4 gap-3">
+            {CATEGORIES.map(({ label, icon: Icon, color, badge, badgeColor }) => (
+              <button
+                key={label}
+                onClick={() => setSelectedCategory(label === selectedCategory ? null : label)}
+                className={`relative flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all active:scale-95 shadow-sm
+                  ${selectedCategory === label
+                    ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100'
+                    : 'border-transparent bg-white hover:border-slate-200 hover:shadow-md'
+                  }`}
+              >
+                {badge && (
+                  <span className={`absolute -top-1.5 -right-1.5 text-[9px] font-extrabold text-white px-1.5 py-0.5 rounded-full shadow ${badgeColor}`}>
+                    {badge}
+                  </span>
+                )}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1.5 ${color}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-700 text-center leading-tight">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          {selectedCategory && (
+            <Link
+              href={`/solicitar?category=${encodeURIComponent(selectedCategory)}`}
+              className="mt-3 flex items-center justify-center space-x-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-sm shadow-lg transition active:scale-95"
+            >
+              <span>Buscar {selectedCategory}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
+        </section>
+
+        {/* ── BANNER URGENTE ────────────────────────────────────────────── */}
+        <div className="flex items-center space-x-4 bg-gradient-to-r from-rose-500 to-orange-500 rounded-2xl p-4 shadow-lg">
+          <div className="p-2.5 bg-white/20 rounded-xl">
+            <Zap className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-extrabold text-sm">¿Emergencia ahora?</p>
+            <p className="text-white/80 text-xs">Plomero o gasista en minutos.</p>
+          </div>
+          <Link
+            href="/solicitar?mode=urgent"
+            className="bg-white text-rose-600 font-extrabold text-xs px-3 py-2 rounded-xl shadow active:scale-95 transition flex-shrink-0"
+          >
+            Pedir Ya
+          </Link>
         </div>
+
+        {/* ── PRESTADORES DESTACADOS ────────────────────────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-base font-extrabold text-slate-800">Cerca de vos ahora</h2>
+              <p className="text-xs text-slate-500">Profesionales verificados en Santiago del Estero</p>
+            </div>
+            <Link href="/solicitar" className="text-xs font-bold text-blue-600 flex items-center hover:underline">
+              <span>Ver más</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="space-y-3">
+            {FEATURED_PROVIDERS.map((p) => (
+              <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center space-x-4 hover:shadow-md transition">
+                <ProviderAvatar initials={p.avatar} gradient={p.avatarColor} online={p.online} />
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-0.5">
+                    <p className="font-extrabold text-sm text-slate-800 truncate">{p.name}</p>
+                    {p.online && (
+                      <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                        En zona
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 truncate mb-1.5">{p.specialty}</p>
+                  <div className="flex items-center space-x-3">
+                    <StarRating rating={p.rating} />
+                    <span className="text-slate-300">·</span>
+                    <span className="text-xs text-slate-500 flex items-center">
+                      <MapPin className="w-3 h-3 mr-0.5 text-slate-400" />
+                      {p.distance}
+                    </span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-xs text-slate-500 flex items-center">
+                      <Clock className="w-3 h-3 mr-0.5 text-slate-400" />
+                      {p.eta}
+                    </span>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/solicitar?provider=${p.id}`}
+                  className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow transition active:scale-95"
+                >
+                  Pedir
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── BANNER REGISTRO PRESTADOR ─────────────────────────────────── */}
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-5 flex items-center space-x-4 shadow-xl">
+          <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Shield className="w-6 h-6 text-blue-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-extrabold text-sm">¿Sos trabajador independiente?</p>
+            <p className="text-white/60 text-xs mt-0.5">Recibí clientes en tu zona. ARCA verificado.</p>
+          </div>
+          <Link
+            href="/registro-prestador"
+            className="flex-shrink-0 bg-white text-slate-900 font-extrabold text-xs px-3 py-2.5 rounded-xl shadow active:scale-95 transition"
+          >
+            Sumarme
+          </Link>
+        </div>
+
       </div>
+
+      {/* ── STICKY CTA BAR (Mobile Bottom) ───────────────────────────────── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-slate-100 shadow-2xl px-4 py-3">
+        <Link
+          href="/solicitar"
+          className="flex items-center justify-center space-x-2 w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl font-extrabold text-sm shadow-lg transition active:scale-95"
+        >
+          <Search className="w-4 h-4" />
+          <span>Buscar un Oficio Ahora</span>
+        </Link>
+      </div>
+
     </div>
   );
 }
