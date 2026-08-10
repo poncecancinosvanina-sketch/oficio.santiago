@@ -8,6 +8,7 @@ import {
   SprayCan, HardHat, ArrowRight, Bell, User
 } from 'lucide-react';
 import { LogoOficiosSantiago } from '@/components/Logo';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 // ─── Datos estáticos del MVP ───────────────────────────────────────────────────
 
@@ -162,6 +163,10 @@ export default function Home() {
               >
                 <Search className="w-4 h-4" />
               </Link>
+            </div>
+
+            <div className="mt-3">
+              <GoogleSignInButton />
             </div>
           </div>
         </div>

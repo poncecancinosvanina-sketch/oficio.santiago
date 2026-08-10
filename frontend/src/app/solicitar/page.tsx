@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { getSupabaseErrorMessage } from '@/lib/supabase/errors';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { getAuthenticatedUser } from '@/lib/supabase/auth';
 import { Search, MapPin, Loader2, CheckCircle, Phone } from 'lucide-react';
 import ProviderCard from '@/components/ProviderCard';
 import { Provider } from '@/types/database';
@@ -20,6 +22,7 @@ export default function SolicitarServicio() {
 
   // Form states
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [category, setCategory] = useState('Plomería');
@@ -62,6 +65,25 @@ export default function SolicitarServicio() {
       fetchNearbyProviders();
     }
   }, [lat, lng, category]);
+
+  // Autocompletar datos desde sesión Supabase si existe
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const user = await getAuthenticatedUser();
+        if (!mounted || !user) return;
+        if (user.user_metadata?.full_name) setName(user.user_metadata.full_name as string);
+        if (user.email) setEmail(user.email);
+      } catch (e) {
+        // Silenciar errores de auth en el formulario
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const fetchNearbyProviders = async () => {
     setSearchingProviders(true);
@@ -113,6 +135,7 @@ export default function SolicitarServicio() {
         {
           id: clientId,
           name,
+          email,
           phone,
           address,
           location: clientLocationPoint,
@@ -198,7 +221,14 @@ export default function SolicitarServicio() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              
+
+              {/* Botón Google */}
+              <div>
+                <GoogleSignInButton onError={(m) => setError(m)} />
+              </div>
+
+              <div className="text-center text-sm text-slate-400">o completar manualmente</div>
+
               {/* Nombre */}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Tu Nombre Completo</label>
@@ -208,6 +238,19 @@ export default function SolicitarServicio() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+
+              {/* Email (autocompletado desde Google si existe) */}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  placeholder="tunombre@ejemplo.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
